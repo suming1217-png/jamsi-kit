@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="googlebot" content="noindex,nofollow">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>잠시멈춤 모바일 키트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 한 손으로 넘기는 세로 카드 흐름. 상단 고정 바(시도·메뉴) + 단계별 화면 하나씩 */
+:root{
+  --bg:#FBF9F5; --surface:#FFFFFF; --soft:#F1F3F7; --line:#E8E5DF;
+  --ink:#3C4356; --muted:#7D8494; --blue:#5E7194; --blue-soft:#E4E9F1;
+  --peach:#E8957A; --peach-soft:#FBE7DF; --ok:#5E8C78; --warn:#C08A3E; --hot:#C7604A;
+  --f-display:"Gowun Dodum","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1C1F27; --surface:#252935; --soft:#2C3140; --line:#363B4A;
+  --ink:#E6E8EE; --muted:#A3A9B8; --blue:#9DB0D6; --blue-soft:#323A4F;
+  --peach:#F0A48B; --peach-soft:#4A342D; --ok:#86BBA2; --warn:#E0B36F; --hot:#EC8E78; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1C1F27; --surface:#252935; --soft:#2C3140; --line:#363B4A;
+  --ink:#E6E8EE; --muted:#A3A9B8; --blue:#9DB0D6; --blue-soft:#323A4F;
+  --peach:#F0A48B; --peach-soft:#4A342D; --ok:#86BBA2; --warn:#E0B36F; --hot:#EC8E78; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:560px;margin:0 auto}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:10px;padding-block:12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--f-display);font-size:18px;flex:1;min-width:0}
+.brand b{color:var(--blue);font-weight:400}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--peach);flex:none}
+nav.steps{display:flex;gap:6px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
+nav.steps a{flex:none;text-decoration:none;font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--surface)}
+nav.steps a[aria-current="page"]{background:var(--blue);border-color:var(--blue);color:var(--surface)}
+section.view{display:flex;flex-direction:column;gap:16px;padding-top:8px}
+h1{font-family:var(--f-display);font-weight:400;font-size:28px;line-height:1.3;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;font-size:21px;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--peach);font-weight:600;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.soft{background:var(--soft);border-radius:var(--r);padding:16px}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--blue);color:var(--surface);font:600 16px var(--f-body);padding:14px 18px;cursor:pointer;width:100%}
+.btn.ghost{background:var(--surface);color:var(--blue);border:1px solid var(--blue)}
+.btn.peach{background:var(--peach);color:#2b2522}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,a:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--peach);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+select,textarea,input[type=text]{width:100%;font:16px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+textarea{min-height:84px;resize:vertical}
+label.q{font-weight:600}
+.small{font-size:13px;color:var(--muted)}
+/* RPM */
+.rpm{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rpm button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:16px 8px;font:600 15px var(--f-body);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rpm button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.gauge{width:44px;height:44px;border-radius:50%;border:5px solid var(--blue-soft);position:relative}
+.gauge i{position:absolute;left:50%;bottom:50%;width:3px;height:16px;background:var(--ink);transform-origin:bottom center;border-radius:2px}
+/* checklist */
+.group h3{margin:0 0 6px;font-size:15px}
+.group h3 span{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.check:first-of-type{border-top:0}
+.check input{width:22px;height:22px;margin-top:2px;accent-color:var(--blue);flex:none}
+.level{display:flex;align-items:center;gap:12px}
+.pill{border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}
+.pill.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.pill.hot{background:var(--peach-soft);color:var(--hot)}
+.big-num{font-family:var(--f-display);font-size:44px;line-height:1;color:var(--blue);font-variant-numeric:tabular-nums}
+/* DISC */
+.progress{height:6px;background:var(--soft);border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--blue);transition:width .2s}
+.words{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.words button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:18px 10px;font:600 17px var(--f-body);color:var(--ink);cursor:pointer;min-height:72px}
+.words button:active{background:var(--blue-soft)}
+.wait{text-align:center;align-items:center}
+.drum{font-family:var(--f-display);font-size:34px;color:var(--blue)}
+.result-head{display:flex;gap:16px;align-items:center}
+.badge{width:76px;height:76px;border-radius:50%;background:var(--blue);color:var(--surface);display:grid;place-items:center;font:700 34px var(--f-body);flex:none}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:62px 1fr 28px;gap:8px;align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
+.bar span.track{height:12px;background:var(--soft);border-radius:999px;overflow:hidden}
+.bar span.track i{display:block;height:100%;background:var(--blue-soft);border-right:3px solid var(--blue)}
+.bar.top span.track i{background:var(--blue)}
+dl.facts{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}
+dl.facts dt{font-weight:700;color:var(--blue);font-size:14px}
+dl.facts dd{margin:0}
+/* table map */
+.counter{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.ctr{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ctr strong{font-size:15px}
+.ctr .n{font:700 30px var(--f-body);color:var(--blue);font-variant-numeric:tabular-nums}
+.ctr .pm{display:flex;gap:8px;width:100%}
+.ctr .pm button{flex:1;border:1px solid var(--line);background:var(--soft);border-radius:10px;font:700 20px var(--f-body);color:var(--ink);padding:6px 0;cursor:pointer}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:6px;aspect-ratio:1/1;max-width:100%}
+.quad div{border-radius:12px;background:var(--soft);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:8px;text-align:center}
+.quad div b{font-size:15px}
+.quad div .dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:120px}
+.quad div .dots i{width:12px;height:12px;border-radius:50%;background:var(--blue)}
+ul.roles{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+ul.roles li{display:flex;gap:10px;align-items:baseline}
+ul.roles li b{flex:none;width:76px;color:var(--blue);font-size:14px}
+/* my card */
+.mycard{border-radius:18px;padding:22px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.mycard::after{content:"";position:absolute;right:-60px;top:-60px;width:170px;height:170px;border-radius:50%;background:var(--blue-soft);z-index:0}
+.mycard>*{position:relative;z-index:1}
+.mycard h2{color:var(--blue)}
+.mycard ol{margin:0;padding-left:20px}
+.note{font-size:13px;color:var(--muted);background:var(--soft);border-radius:12px;padding:12px}
+.picks{display:flex;flex-direction:column;gap:10px}
+.picks button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:14px 16px;font:500 16px var(--f-body);color:var(--ink);cursor:pointer;display:flex;gap:12px;align-items:center}
+.picks button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.picks button small{display:block;color:var(--muted);font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:20}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">잠시멈춤 <b>모바일 키트</b></div>
+    <span class="chip" id="regionChip"><span class="dot"></span><span id="regionLabel">테이블 선택 전</span></span>
+  </header>
+  <nav class="steps" id="steps" aria-label="활동 순서"></nav>
+  <main id="app"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+// ---------- 저장 (이 휴대폰 안에만) ----------
+const KEY="jamsi-kit-v1";
+let S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:""};
+try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(S,JSON.parse(raw));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const $=s=>document.querySelector(s);
+function el(tag,attrs,...kids){const n=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(k==="class")n.className=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,"");else if(v!==false&&v!=null)n.setAttribute(k,v);}for(const k of kids.flat()){if(k==null||k===false)continue;n.append(k.nodeType?k:document.createTextNode(String(k)));}return n;}
+function toast(t){const n=$("#toast");n.textContent=t;n.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>n.hidden=true,1800);}
+
+// ---------- 내용 (강의 슬라이드·활동지와 동일) ----------
+const REGIONS=Array.from({length:13},(_,i)=>(i+1)+"번 테이블");
+const CHECKS=[
+ {g:"몸의 신호",s:"엔진 소음",items:["두통이나 뒷목·어깨 뻐근함이 자주 있다","잠들기 어렵거나 자다가 자주 깬다","쉬어도 피로가 잘 풀리지 않는다","소화가 잘 안 되거나 입맛이 변했다"]},
+ {g:"마음의 신호",s:"온도 상승",items:["사소한 일에도 짜증이 난다","걱정이 머릿속에서 잘 떠나지 않는다","일에 대한 의욕이 예전 같지 않다","웃을 일이 눈에 띄게 줄었다"]},
+ {g:"행동의 신호",s:"주행 이상",items:["술·과식·야식이 늘었다","퇴근 후 휴대폰만 붙잡고 있다","말수가 줄거나 괜히 화를 낸다","일을 미루거나 실수가 늘었다"]}];
+const DISC_ROWS=[["결단력 있는","말솜씨 좋은","차분한","꼼꼼한"],["도전을 즐기는","사람을 좋아하는","참을성 있는","원칙을 지키는"],["직설적인","유쾌한","배려하는","신중한"],["추진력 있는","분위기를 띄우는","믿음직한","정확한"],["승부욕 있는","낙천적인","협조적인","체계적인"],["빨리 결정하는","칭찬을 잘하는","꾸준한","분석적인"],["앞장서는","표현이 풍부한","잘 들어주는","계획적인"],["목표 지향적인","열정적인","온화한","기준이 높은"],["대담한","즉흥적인","한결같은","논리적인"],["독립적인","사교적인","양보하는","사실을 중시하는"],["결과가 중요한","재미가 중요한","관계가 중요한","정확성이 중요한"],["밀어붙이는","설득하는","맞춰주는","따져보는"]];
+const T="DISC";
+const TYPES={
+ D:{name:"주도형",mach:"트랙터",one:"앞에서 끌고 가는 힘",strong:"추진력, 빠른 결단, 위기 대응",signal:"조급해짐, 명령조, 혼자 처리",cool:["몸 쓰는 운동 10분","작은 일이라도 스스로 결정하기","해낸 일 하나 적어 보기"],talk:"결론부터 짧게",role:"현장 지휘·우선순위"},
+ I:{name:"사교형",mach:"방제 드론",one:"넓게 날며 사람을 잇는 힘",strong:"분위기 메이커, 설득, 연결",signal:"말이 많아지거나 갑자기 조용해짐",cool:["좋아하는 사람과 수다 10분","고마운 사람에게 짧은 인사","오늘 칭찬받은 일 떠올리기"],talk:"반응해 주고 칭찬 먼저",role:"농가 어르신 소통·주민 안내"},
+ S:{name:"안정형",mach:"이앙기",one:"줄 맞춰 꾸준히 심는 힘",strong:"꾸준함, 배려, 팀워크",signal:"참다가 지침, 갑작스런 변화에 흔들림",cool:["익숙한 산책길 걷기","내일 일정 미리 정리해 두기","아무것도 안 하는 쉼 10분"],talk:"미리 알려주고 천천히",role:"장비·물자 챙기기, 끝까지 수리"},
+ C:{name:"신중형",mach:"정밀 진단기",one:"원인을 찾아내는 힘",strong:"정확성, 분석, 안전 기준",signal:"걱정 증가, 지나친 완벽주의, 비판적",cool:["걱정을 종이에 적고 덮기","필요한 정보 하나만 확인하기","혼자 정리하는 조용한 시간"],talk:"근거와 자료로",role:"점검표·안전수칙·기록 관리"}};
+const PICKS=[{k:"rpm",t:"출근 전 \"오늘 내 RPM은?\" 30초 점검"},{k:"box",t:"과열되면 3분 박스호흡"},{k:"cool",t:"하루 한 번 나의 냉각수 1개 쓰기"},{k:"thanks",t:"퇴근길 고마운 사람 한 명 떠올리기"}];
+
+// ---------- 라우팅 ----------
+const ROUTES=[["home","시작"],["rpm","① 오늘 RPM"],["check","② 경고등 점검"],["reframe","③ 관점 바꾸기"],["disc","④ DISC 진단"],["table","⑤ 테이블 지도"],["card","⑥ 나의 카드"],["pick","⑦ 내일 할 것"]];
+function current(){const h=(location.hash||"").slice(1);return ROUTES.some(r=>r[0]===h)?h:"home";}
+function go(r){if(location.hash.slice(1)===r)render();else location.hash=r;window.scrollTo(0,0);}
+function renderNav(){const nav=$("#steps");nav.replaceChildren();const cur=current();  for(const [k,t] of ROUTES){nav.append(el("a",{href:"#"+k,"aria-current":k===cur?"page":false},t));}
+  const a=nav.querySelector('[aria-current="page"]'); if(a) a.scrollIntoView({inline:"center",block:"nearest"});}
+function renderChip(){$("#regionLabel").textContent=S.region||"테이블 선택 전";}
+function nextBtn(r,label){return el("button",{class:"btn",onclick:()=>go(r)},label||"다음으로");}
+
+// ---------- 화면들 ----------
+const V={};
+V.home=()=>{
+  const sel=el("select",{id:"region","aria-label":"우리 테이블 번호"},el("option",{value:""},"테이블 번호를 고르세요 (1~13)"),REGIONS.map(r=>el("option",{value:r,selected:S.region===r},r)));
+  sel.addEventListener("change",()=>{S.region=sel.value;save();renderChip();});
+  return [
+    el("p",{class:"eyebrow"},"농업기계안전전문관 힐링 특강"),
+    el("h1",{},"잠시멈춤, 다시시작"),
+    el("p",{class:"lead"},"오늘 강의에서 휴대폰으로 하는 활동이 모두 여기 있습니다. 강사님 안내에 맞춰 한 단계씩 진행해 주세요."),
+    el("div",{class:"card"},el("label",{class:"q",for:"region"},"우리 테이블은 몇 번인가요?"),sel,
+      el("p",{class:"small"},"이름, 연락처, 소속은 묻지 않습니다. 입력한 내용은 이 휴대폰 안에만 남고 어디에도 전송되지 않습니다.")),
+    nextBtn("rpm","시작하기")];
+};
+V.rpm=()=>{
+  const opts=[["low","저속","너무 느슨, 무기력",-60],["mid","적정","해볼 만하다",0],["red","레드존","과열, 쉬고 싶다",60]];
+  const msg={low:"오늘은 엔진이 조금 식어 있네요. 가볍게 시동 걸어 봐요.",mid:"딱 좋은 회전수! 오늘 90분도 이 상태로 함께해요.",red:"오늘은 레드존이군요. 이 시간만큼은 잠시 멈춰 쉬어 가세요."};
+  const out=el("p",{class:"soft"},S.rpm?msg[S.rpm]:"하나를 눌러 주세요.");
+  const grid=el("div",{class:"rpm",role:"group","aria-label":"오늘 컨디션"});
+  for(const [k,t,d,deg] of opts){const g=el("span",{class:"gauge"},el("i",{style:`transform:translateX(-50%) rotate(${deg}deg)`}));
+    grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();}},g,t,el("span",{class:"small"},d)));}
+  return [el("p",{class:"eyebrow"},"① 시동 걸기"),el("h1",{},"오늘 내 RPM은 몇인가요?"),el("p",{class:"lead"},"지금 몸과 마음의 회전수를 골라 주세요. 정답은 없습니다."),grid,out,nextBtn("check")];
+};
+V.check=()=>{
+  const total=()=>S.checks.length;
+  const res=el("div",{class:"card"});
+  function paint(){const n=total();let p,t,d;
+    if(n<=3){p="ok";t="적정 회전";d="지금처럼 하루 3번 일상점검을 이어가세요.";}
+    else if(n<=7){p="warn";t="주의 · 냉각 필요";d="Part 4의 박스호흡과 나의 냉각수를 이번 주에 꼭 써 보세요.";}
+    else{p="hot";t="레드존";d="혼자 견디지 말고 가까운 사람이나 상담 창구에 이야기해 보세요. 소속 기관의 직원 상담 프로그램도 이용할 수 있습니다.";}
+    res.replaceChildren(el("div",{class:"level"},el("span",{class:"big-num"},n),el("div",{},el("div",{class:"small"},"켜진 경고등 (12개 중)"),el("span",{class:"pill "+p},t))),el("p",{style:"margin:0"},d));}
+  const groups=CHECKS.map((g,gi)=>el("div",{class:"card group"},el("h3",{},g.g,el("span",{},g.s)),
+    g.items.map((it,ii)=>{const id="c"+gi+ii;const cb=el("input",{type:"checkbox",id,checked:S.checks.includes(id)});
+      cb.addEventListener("change",()=>{S.checks=cb.checked?[...new Set([...S.checks,id])]:S.checks.filter(x=>x!==id);save();paint();});
+      return el("label",{class:"check",for:id},cb,el("span",{},it));})));
+  paint();
+  return [el("p",{class:"eyebrow"},"② 과열 경고등"),el("h1",{},"나는 몇 개 켜졌나요?"),el("p",{class:"lead"},"최근 2주를 떠올리며 해당하는 칸을 눌러 주세요. 교육용 자가점검이며 진단이 아닙니다. 결과는 나만 봅니다."),...groups,res,nextBtn("reframe")];
+};
+V.reframe=()=>{
+  const f=(id,label,ph,key)=>{const t=el("textarea",{id,placeholder:ph});t.value=S.reframe[key]||"";t.addEventListener("input",()=>{S.reframe[key]=t.value;save();paintOut();});return el("div",{class:"card"},el("label",{class:"q",for:id},label),t);};
+  const out=el("div",{class:"soft"});
+  function paintOut(){const r=S.reframe;if(!(r.a||r.b||r.c)){out.replaceChildren(el("span",{class:"small"},"칸을 채우면 여기에 나의 새 문장이 만들어집니다."));return;}
+    out.replaceChildren(el("p",{class:"eyebrow"},"나의 관점 전환 문장"),el("p",{style:"margin:0;font-size:18px"},[r.a,r.b,r.c].filter(Boolean).join(" ")));}
+  paintOut();
+  return [el("p",{class:"eyebrow"},"③ 관점 바꾸기 3단계"),el("h1",{},"같은 말, 다르게 읽기"),el("p",{class:"lead"},"억지로 긍정하는 것이 아니라 정확하게 다시 읽는 연습입니다."),
+    f("rf0","요즘 자주 하는 말","예) 또 출동이야…","orig"),
+    f("rf1","1. 알아차리기: 지금 내 몸과 마음은?","예) 어깨가 굳었네. 긴장했구나.","a"),
+    f("rf2","2. 다시 읽기: 이 긴장은 무엇을 지키려는 걸까?","예) 사고 없이 끝내고 싶어서 그런 거구나.","b"),
+    f("rf3","3. 한 걸음: 지금 할 수 있는 작은 행동 1개","예) 점검표부터 한 번 더 보자.","c"),
+    out,el("p",{class:"note"},"테이블 활동: 짝과 휴대폰을 바꿔 서로의 문장을 함께 다듬어 보세요."),nextBtn("disc")];
+};
+// DISC
+let discState=null;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+V.disc=()=>{
+  if(S.disc&&S.discRevealed) return resultView();
+  if(S.disc) return waitView();
+  if(!discState) discState={i:0,picks:[],orders:DISC_ROWS.map(()=>shuffle([0,1,2,3]))};
+  const i=discState.i,row=DISC_ROWS[i],order=discState.orders[i];
+  const words=el("div",{class:"words"},order.map(k=>el("button",{onclick:()=>{discState.picks[i]=k;discState.i++;
+    if(discState.i>=DISC_ROWS.length){const c={D:0,I:0,S:0,C:0};discState.picks.forEach(p=>c[T[p]]++);S.disc=c;S.discRevealed=false;save();discState=null;}
+    render();}},row[k])));
+  return [el("p",{class:"eyebrow"},"④ 나의 엔진 찾기 · DISC"),el("h1",{},"평소 일할 때의 나와 가장 가까운 단어는?"),
+    el("div",{class:"progress","aria-label":`${i+1} / 12`},el("i",{style:`width:${(i/12)*100}%`})),
+    el("p",{class:"small",style:"margin:0"},`${i+1} / 12 · 고민은 3초! 되고 싶은 나 말고 평소의 나`),words,
+    i>0?el("button",{class:"btn ghost",onclick:()=>{discState.i--;render();}},"이전 줄로"):null,
+    el("p",{class:"note"},"교육용 간이 체크(12문항)이며 표준화 검사가 아닙니다. 좋고 나쁜 유형은 없습니다.")];
+};
+function topType(c){const max=Math.max(c.D,c.I,c.S,c.C);return ["D","I","S","C"].filter(k=>c[k]===max);}
+function waitView(){
+  return [el("div",{class:"card wait"},el("p",{class:"eyebrow"},"체크 완료"),el("div",{class:"drum pulse"},"두구두구…"),
+    el("p",{style:"margin:0"},"모두 끝날 때까지 잠시 기다려 주세요. 강사님이 \"공개!\"라고 하면 아래 버튼을 누르세요."),
+    el("button",{class:"btn peach",onclick:()=>{S.discRevealed=true;save();render();}},"내 결과 공개!")),
+    el("button",{class:"btn ghost",onclick:()=>{S.disc=null;save();render();}},"처음부터 다시 체크하기")];
+}
+function resultView(){
+  const c=S.disc,tops=topType(c),t=TYPES[tops[0]];
+  const bars=el("div",{class:"bars"},["D","I","S","C"].map(k=>el("div",{class:"bar"+(tops.includes(k)?" top":"")},el("span",{},k+" "+TYPES[k].name),el("span",{class:"track"},el("i",{style:`width:${(c[k]/12)*100}%`})),el("span",{},c[k]))));
+  return [el("p",{class:"eyebrow"},"④ 나의 엔진 설명서"),
+    el("div",{class:"card"},el("div",{class:"result-head"},el("div",{class:"badge"},tops.join("·")),
+      el("div",{},el("h2",{},tops.map(k=>TYPES[k].name).join(" · ")+"이 가장 강해요"),el("p",{class:"lead"},`농기계로 치면 ${tops.map(k=>TYPES[k].mach).join(" + ")} · ${t.one}`))),
+      bars),
+    el("div",{class:"card"},el("dl",{class:"facts"},
+      el("dt",{},"나의 강점"),el("dd",{},t.strong),
+      el("dt",{},"과열 신호"),el("dd",{},t.signal),
+      el("dt",{},"나의 냉각수"),el("dd",{},t.cool.join(", ")),
+      el("dt",{},"나와 대화할 땐"),el("dd",{},t.talk))),
+    el("p",{class:"note"},"누구나 네 가지를 다 갖고 있고 비율만 다릅니다. 진단이 아니라 대화의 재료로 써 주세요."),
+    nextBtn("table","우리 테이블 지도로")];
+}
+V.table=()=>{
+  const tb=S.table;const sum=tb.D+tb.I+tb.S+tb.C;
+  const ctrs=el("div",{class:"counter"},["D","I","S","C"].map(k=>el("div",{class:"ctr"},el("strong",{},k+" "+TYPES[k].name),el("span",{class:"n"},tb[k]),
+    el("div",{class:"pm"},el("button",{"aria-label":k+" 빼기",onclick:()=>{tb[k]=Math.max(0,tb[k]-1);save();render();}},"−"),el("button",{"aria-label":k+" 더하기",onclick:()=>{tb[k]=Math.min(15,tb[k]+1);save();render();}},"+")))));
+  const quad=el("div",{class:"quad","aria-label":"우리 테이블 DISC 지도"},["D","I","C","S"].map(k=>el("div",{},el("b",{},k+" "+TYPES[k].mach),el("div",{class:"dots"},Array.from({length:tb[k]},()=>el("i"))),el("span",{class:"small"},tb[k]+"명"))));
+  const roles=el("ul",{class:"roles"},["D","I","S","C"].map(k=>{let who=tb[k]>0?`${TYPES[k].name} ${tb[k]}명`:`${TYPES[k].name} 없음 → ${nearest(k)}형이 변신!`;return el("li",{},el("b",{},TYPES[k].role.split("·")[0]),el("span",{},who));}));
+  return [el("p",{class:"eyebrow"},"⑤ 기록이용 · 테이블에 한 대만"),el("h1",{},(S.region||"우리 테이블")+" DISC 지도"),
+    el("p",{class:"lead"},"기록이 한 사람의 휴대폰으로, 유형별로 손을 든 인원을 눌러 세어 주세요."),ctrs,
+    el("p",{class:"small",style:"margin:0"},`합계 ${sum}명`),quad,
+    el("div",{class:"card"},el("h2",{},"응급복구단 역할 추천"),el("p",{class:"small",style:"margin:0"},"태풍 다음 날, 우리 테이블이 침수 농기계 복구단으로 출동한다면?"),roles),
+    nextBtn("card","나의 잠시멈춤 카드로")];
+};
+function nearest(k){const tb=S.table;const order={D:["C","I","S"],I:["D","S","C"],S:["I","C","D"],C:["S","D","I"]}[k];return order.find(x=>tb[x]>0)||"누구든";}
+V.card=()=>{
+  const flat=CHECKS.flatMap((g,gi)=>g.items.map((it,ii)=>({id:"c"+gi+ii,t:it,g:g.g})));
+  const mine=flat.filter(x=>S.checks.includes(x.id)).slice(0,3);
+  const tops=S.disc?topType(S.disc):null;const t=tops?TYPES[tops[0]]:null;
+  const r=S.reframe;const line=[r.a,r.b,r.c].filter(Boolean).join(" ");
+  const card=el("div",{class:"mycard"},
+    el("p",{class:"eyebrow"},"나의 잠시멈춤 카드"+(S.region?" · "+S.region:"")),
+    el("h2",{},t?`나는 ${tops.map(k=>TYPES[k].name).join("·")} (${t.mach})`:"DISC 진단을 하면 유형이 채워져요"),
+    el("div",{},el("b",{},"나의 과열 신호"),mine.length?el("ol",{},mine.map(m=>el("li",{},m.t))):el("p",{class:"small",style:"margin:0"},"경고등 점검에서 체크한 항목이 여기에 나와요.")),
+    el("div",{},el("b",{},"나의 냉각수 3가지"),t?el("ol",{},t.cool.map(c=>el("li",{},c))):el("p",{class:"small",style:"margin:0"},"유형에 맞는 냉각수가 여기에 나와요.")),
+    line?el("div",{},el("b",{},"나의 관점 전환 문장"),el("p",{style:"margin:0"},line)):null,
+    el("div",{},el("b",{},"내일 아침 점검 질문"),el("p",{style:"margin:0"},"\"오늘 내 RPM은 몇이지?\"")));
+  return [el("p",{class:"eyebrow"},"⑥ 나만의 카드"),el("h1",{},"나의 잠시멈춤 카드"),card,
+    el("p",{class:"note"},"이 화면을 캡처해 사진첩에 저장하세요. 종이 카드 4번 칸의 응원 한마디는 옆 동료에게 손글씨로 받아요."),nextBtn("pick")];
+};
+V.pick=()=>{
+  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();}},el("span",{class:"dot"}),el("span",{},p.t))));
+  const chosen=PICKS.find(p=>p.k===S.pick);
+  return [el("p",{class:"eyebrow"},"⑦ 다시 시작"),el("h1",{},"내일부터 딱 하나만 해 볼까요?"),list,
+    chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t),el("p",{class:"small",style:"margin:0"},"저녁 식사 때 같은 걸 고른 동료와 건배해 보세요.")):null,
+    el("p",{class:"note"},"오늘 입력한 내용은 이 휴대폰에만 있습니다. 지우고 싶으면 아래 버튼을 누르세요."),
+    el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:""};renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
+};
+
+function render(){const cur=current();renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...V[cur]()));}
+window.addEventListener("hashchange",render);
+render();
+
+})();
+</script>
+
+</body>
+</html>
