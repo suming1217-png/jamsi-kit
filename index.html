@@ -242,7 +242,8 @@ function go(r){if(location.hash.slice(1)===r)render();else location.hash=r;windo
 function isDone(){const t=S.table||{};return {home:!!S.region,rpm:!!S.rpm,check:!!S.warnDone,reframe:typeof reframeLine==="function"&&!!reframeLine(S.reframe),disc:!!S.discRevealed,table:!!S.tableSeen||(t.D+t.I+t.S+t.C)>0,card:!!S.cardSeen,pick:!!S.pick};}
 function renderNav(){const nav=$("#steps");nav.replaceChildren();const cur=current();  const fin=isDone();for(const [k,t] of ROUTES){nav.append(el("a",{href:"#"+k,class:fin[k]?"done":false,"aria-current":k===cur?"page":false},t));}
   const pb=document.getElementById("progbar");if(pb){const idx=ROUTES.findIndex(r=>r[0]===cur);pb.style.width=Math.max(0,idx)/(ROUTES.length-1)*100+"%";}
-  const a=nav.querySelector('[aria-current="page"]'); if(a) a.scrollIntoView({inline:"center",block:"nearest"});}
+  // 단계 칩은 가로로만 맞춥니다 (scrollIntoView는 화면 전체를 위로 끌어올려서 쓰지 않음)
+  const a=nav.querySelector('[aria-current="page"]'); if(a) nav.scrollLeft=Math.max(0,a.offsetLeft-(nav.clientWidth-a.offsetWidth)/2);}
 function renderChip(){$("#regionLabel").textContent=S.region||"테이블 선택 전";}
 function nextBtn(r,label,pre,guard){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(guard&&!guard())return;if(pre)pre();if(KNUM[r]){pending=r;render();window.scrollTo(0,0);}else go(r);}},label||"다음으로"));}
 function stepName(r){const x=ROUTES.find(v=>v[0]===r);return x?x[1].replace(/^[①-⑦]\s*/,""):"";}
@@ -418,7 +419,8 @@ V.pick=()=>{
     el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:Math.random().toString(36).slice(2,10),sent:""};save();renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
 };
 
-function render(){const cur=current();if(cur==="card"&&!S.cardSeen){S.cardSeen=true;save();}if(cur==="table"&&!S.tableSeen){S.tableSeen=true;save();}renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...(pending&&cur!=="host"?pauseView(pending):[cueBar(cur),...V[cur]()])));}
+let lastView="";
+function render(){const cur=current();const key=cur+(pending?":"+pending:"");const keepY=(key===lastView)?window.scrollY:null;lastView=key;if(cur==="card"&&!S.cardSeen){S.cardSeen=true;save();}if(cur==="table"&&!S.tableSeen){S.tableSeen=true;save();}renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...(pending&&cur!=="host"?pauseView(pending):[cueBar(cur),...V[cur]()])));if(keepY!=null)window.scrollTo(0,keepY);}
 window.addEventListener("hashchange",()=>{pending=null;render();});
 render();
 
