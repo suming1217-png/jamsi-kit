@@ -227,18 +227,22 @@ V.reframe=()=>{
   const f=(id,label,ph,key)=>{const t=el("textarea",{id,placeholder:ph});t.value=S.reframe[key]||"";t.addEventListener("input",()=>{S.reframe[key]=t.value;save();paintOut();});return el("div",{class:"card"},el("label",{class:"q",for:id},label),t);};
   const out=el("div",{class:"soft"});
   function paintOut(){const r=S.reframe;if(!(r.a||r.b||r.c)){out.replaceChildren(el("span",{class:"small"},"칸을 채우면 여기에 나의 새 문장이 만들어집니다."));return;}
-    out.replaceChildren(el("p",{class:"eyebrow"},"나의 관점 전환 문장"),el("p",{style:"margin:0;font-size:18px"},[r.a,r.b,r.c].filter(Boolean).join(" ")));}
+    const line=reframeLine(r);out.replaceChildren(el("p",{class:"eyebrow"},"나의 관점 전환 문장"),line?el("p",{style:"margin:0;font-size:18px"},line):el("p",{class:"small",style:"margin:0"},"세 칸을 모두 채우면 \"지금 ○○. ○○을 지키기 위해 ○○을 해 보자\" 문장이 완성됩니다."));}
   paintOut();
   return [el("p",{class:"eyebrow"},"③ 관점 바꾸기 3단계"),el("h1",{},"같은 말, 다르게 읽기"),el("p",{class:"lead"},"억지로 긍정하는 것이 아니라 정확하게 다시 읽는 연습입니다."),
     f("rf0","요즘 자주 하는 말","예) 또 출동이야…","orig"),
-    f("rf1","1. 알아차리기: 지금 내 몸과 마음은?","예) 어깨가 굳었네. 긴장했구나.","a"),
-    f("rf2","2. 다시 읽기: 이 긴장은 무엇을 지키려는 걸까?","예) 사고 없이 끝내고 싶어서 그런 거구나.","b"),
-    f("rf3","3. 한 걸음: 지금 할 수 있는 작은 행동 1개","예) 점검표부터 한 번 더 보자.","c"),
+    f("rf1","1. 알아차리기: 지금 내 몸과 마음은?","예) 어깨가 굳고 긴장했구나","a"),
+    f("rf2","2. 다시 읽기: 이 긴장은 무엇을 지키려는 걸까?","예) 사고 없는 하루","b"),
+    f("rf3","3. 한 걸음: 지금 할 수 있는 작은 행동 1개","예) 점검표 한 번 더 보기","c"),
     out,
-    SENDING?el("button",{class:"btn ghost",onclick:async(ev)=>{const r=S.reframe;const line=[r.a,r.b,r.c].filter(Boolean).join(" ");if(!(r.orig||line)){toast("먼저 문장을 적어 주세요");return;}
+    SENDING?el("button",{class:"btn ghost",onclick:async(ev)=>{const r=S.reframe;const line=reframeLine(r);if(!(r.orig||line)){toast("먼저 문장을 적어 주세요");return;}
       ev.currentTarget.disabled=true;await send("sentence",{sentence:(r.orig?"[원래] "+r.orig+" ":"")+(line?"[새 문장] "+line:"")});S.sent="1";save();toast("익명으로 보냈습니다");render();}},S.sent?"다시 보내기 (익명)":"이 문장을 강사에게 보내기 (익명, 선택)"):null,
     el("p",{class:"note"},"테이블 활동: 짝과 휴대폰을 바꿔 서로의 문장을 함께 다듬어 보세요."),nextBtn("disc")];
 };
+// 관점 전환 문장: "지금 [1]. [2]을/를 지키기 위해 [3]을/를 해 보자"
+function trimEnd(t){return String(t||"").trim().replace(/[\s.,!?~…。]+$/,"");}
+function josa(t,a,b){const c=t.charCodeAt(t.length-1);if(c>=0xAC00&&c<=0xD7A3)return t+((c-0xAC00)%28?a:b);return t+a+"("+b+")";}
+function reframeLine(r){const a=trimEnd(r.a),b=trimEnd(r.b),c=trimEnd(r.c);if(!(a&&b&&c))return "";return "지금 "+a+". "+josa(b,"을","를")+" 지키기 위해 "+josa(c,"을","를")+" 해 보자";}
 // DISC
 let discState=null;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -295,7 +299,7 @@ V.card=()=>{
   const flat=CHECKS.flatMap((g,gi)=>g.items.map((it,ii)=>({id:"c"+gi+ii,t:it,g:g.g})));
   const mine=flat.filter(x=>S.checks.includes(x.id)).slice(0,3);
   const tops=S.disc?topType(S.disc):null;const t=tops?TYPES[tops[0]]:null;
-  const r=S.reframe;const line=[r.a,r.b,r.c].filter(Boolean).join(" ");
+  const r=S.reframe;const line=reframeLine(r);
   const card=el("div",{class:"mycard"},
     el("p",{class:"eyebrow"},"나의 잠시멈춤 카드"+(S.region?" · "+S.region:"")),
     el("h2",{},t?`나는 ${tops.map(k=>TYPES[k].name).join("·")} (${t.mach})`:"DISC 진단을 하면 유형이 채워져요"),
