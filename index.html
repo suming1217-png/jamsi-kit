@@ -174,6 +174,9 @@ ol.howto{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap
 .sendcard h2{font-size:17px;margin:0}
 .sent-ok{color:var(--ok);font-weight:600}
 .dock2{display:flex;gap:8px}.dock2 .btn{flex:1}
+
+.words.opts{grid-template-columns:1fr}
+.words.opts button{text-align:left;font:600 16px var(--f-body);min-height:62px;padding:14px 16px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -223,7 +226,14 @@ const CHECKS=[
  {g:"몸의 신호",s:"엔진 소음",items:["두통이나 뒷목·어깨 뻐근함이 자주 있다","잠들기 어렵거나 자다가 자주 깬다","쉬어도 피로가 잘 풀리지 않는다","소화가 잘 안 되거나 입맛이 변했다"]},
  {g:"마음의 신호",s:"온도 상승",items:["사소한 일에도 짜증이 난다","걱정이 머릿속에서 잘 떠나지 않는다","일에 대한 의욕이 예전 같지 않다","웃을 일이 눈에 띄게 줄었다"]},
  {g:"행동의 신호",s:"주행 이상",items:["술·과식·야식이 늘었다","퇴근 후 휴대폰만 붙잡고 있다","말수가 줄거나 괜히 화를 낸다","일을 미루거나 실수가 늘었다"]}];
-const DISC_ROWS=[["결단력 있는","말솜씨 좋은","차분한","꼼꼼한"],["도전을 즐기는","사람을 좋아하는","참을성 있는","원칙을 지키는"],["직설적인","유쾌한","배려하는","신중한"],["추진력 있는","분위기를 띄우는","믿음직한","정확한"],["승부욕 있는","낙천적인","협조적인","체계적인"],["빨리 결정하는","칭찬을 잘하는","꾸준한","분석적인"],["앞장서는","표현이 풍부한","잘 들어주는","계획적인"],["목표 지향적인","열정적인","온화한","기준이 높은"],["대담한","즉흥적인","한결같은","논리적인"],["독립적인","사교적인","양보하는","사실을 중시하는"],["결과가 중요한","재미가 중요한","관계가 중요한","정확성이 중요한"],["밀어붙이는","설득하는","맞춰주는","따져보는"]];
+// 상황별 4가지 반응: 순서대로 D(가) · I(나) · S(다) · C(라). 화면에서는 섞어서 보여 줌
+const DISC_Q=["호우·폭염 특보가 뜨면","농업인이 항의 전화를 하면","새 기술 보급 과제를 받으면","센터 회의에서 나는","보조사업 서류 마감이 몰리면","동료가 말하는 나는"];
+const DISC_ROWS=[["바로 현장 대응 계획을 세우고 움직인다","농가와 동료에게 연락을 돌려 상황을 나눈다","매뉴얼대로 맡은 일을 차분히 챙긴다","피해 기준과 조사 양식부터 확인한다"],
+ ["핵심을 짚고 해결책을 바로 제시한다","먼저 공감하며 분위기를 누그러뜨린다","끝까지 들어 주며 참는다","규정과 근거를 차근차근 설명한다"],
+ ["시범 농가를 정하고 바로 추진한다","농업인 모임에서 이야기하며 분위기를 띄운다","기존 일정에 맞춰 차근차근 준비한다","시험 결과와 자료부터 꼼꼼히 검토한다"],
+ ["요점을 짚고 결정을 재촉한다","의견과 아이디어를 많이 낸다","주로 듣고 의견을 조율한다","근거와 세부 사항을 질문한다"],
+ ["우선순위를 정해 밀어붙인다","동료와 이야기하며 버티다 산만해진다","말없이 혼자 떠안는다","하나하나 다시 확인하다 늦어진다"],
+ ["추진력 있다","유쾌하다","믿음직하다","꼼꼼하다"]];
 const T="DISC";
 const TYPES={
  D:{name:"주도형",mach:"트랙터",one:"앞에서 끌고 가는 힘",strong:"추진력, 빠른 결단, 위기 대응",signal:"조급해짐, 명령조, 혼자 처리",cool:["몸 쓰는 운동 10분","작은 일이라도 스스로 결정하기","해낸 일 하나 적어 보기"],talk:"결론부터 짧게",role:"현장 지휘·우선순위"},
@@ -346,14 +356,14 @@ V.disc=()=>{
   if(S.disc) return waitView();
   if(!discState) discState={i:0,picks:[],orders:DISC_ROWS.map(()=>shuffle([0,1,2,3]))};
   const i=discState.i,row=DISC_ROWS[i],order=discState.orders[i];
-  const words=el("div",{class:"words"},order.map(k=>el("button",{onclick:()=>{discState.picks[i]=k;discState.i++;
+  const words=el("div",{class:"words opts"},order.map(k=>el("button",{onclick:()=>{discState.picks[i]=k;discState.i++;
     if(discState.i>=DISC_ROWS.length){const c={D:0,I:0,S:0,C:0};discState.picks.forEach(p=>c[T[p]]++);S.disc=c;S.discRevealed=false;save();discState=null;}
     render();}},row[k])));
-  return [el("p",{class:"eyebrow"},"④ 나의 엔진 찾기 · DISC"),el("h1",{},"평소 일할 때의 나와 가장 가까운 단어는?"),
-    el("div",{class:"progress","aria-label":`${i+1} / 12`},el("i",{style:`width:${(i/12)*100}%`})),
-    el("p",{class:"small",style:"margin:0"},`${i+1} / 12 · 고민은 3초! 되고 싶은 나 말고 평소의 나`),words,
+  return [el("p",{class:"eyebrow"},"④ 나의 엔진 찾기 · DISC"),el("h1",{},DISC_Q[i]),el("p",{class:"lead",style:"margin:0"},"평소 일할 때의 나와 가장 가까운 것 하나를 골라 주세요."),
+    el("div",{class:"progress","aria-label":`${i+1} / ${DISC_ROWS.length}`},el("i",{style:`width:${(i/DISC_ROWS.length)*100}%`})),
+    el("p",{class:"small",style:"margin:0"},`${i+1} / ${DISC_ROWS.length} · 고민은 3초! 되고 싶은 나 말고 평소의 나`),words,
     i>0?el("button",{class:"btn ghost",onclick:()=>{discState.i--;render();}},"이전 줄로"):null,
-    el("p",{class:"note"},"교육용 간이 체크(12문항)이며 표준화 검사가 아닙니다. 좋고 나쁜 유형은 없습니다.")];
+    el("p",{class:"note"},"교육용 간이 체크(6문항)이며 표준화 검사가 아닙니다. 좋고 나쁜 유형은 없습니다.")];
 };
 function topType(c){const max=Math.max(c.D,c.I,c.S,c.C);return ["D","I","S","C"].filter(k=>c[k]===max);}
 function waitView(){
@@ -364,7 +374,7 @@ function waitView(){
 }
 function resultView(){
   const c=S.disc,tops=topType(c),t=TYPES[tops[0]];
-  const bars=el("div",{class:"bars"},["D","I","S","C"].map(k=>el("div",{class:"bar"+(tops.includes(k)?" top":"")},el("span",{},k+" "+TYPES[k].name),el("span",{class:"track"},el("i",{style:`width:${(c[k]/12)*100}%`})),el("span",{},c[k]))));
+  const bars=el("div",{class:"bars"},["D","I","S","C"].map(k=>el("div",{class:"bar"+(tops.includes(k)?" top":"")},el("span",{},k+" "+TYPES[k].name),el("span",{class:"track"},el("i",{style:`width:${Math.min(100,(c[k]/DISC_ROWS.length)*100)}%`})),el("span",{},c[k]))));
   return [el("p",{class:"eyebrow"},"④ 나의 엔진 설명서"),
     el("div",{class:"card"},el("div",{class:"result-head"},el("div",{class:"badge"},tops.join("·")),
       el("div",{},el("h2",{},tops.map(k=>TYPES[k].name).join(" · ")+"이 가장 강해요"),el("p",{class:"lead"},`농기계로 치면 ${tops.map(k=>TYPES[k].mach).join(" + ")} · ${t.one}`))),
