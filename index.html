@@ -177,6 +177,10 @@ ol.howto{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap
 
 .words.opts{grid-template-columns:1fr}
 .words.opts button{text-align:left;font:600 16px var(--f-body);min-height:62px;padding:14px 16px;line-height:1.45}
+
+/* 단계 칩: 마우스로 쓰는 화면(PC·프로젝터)에서는 줄바꿈해 모두 보이게, 휴대폰은 좌우로 밀기 */
+@media (hover:hover) and (pointer:fine){nav.steps{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}}
+.chip.hostlink{text-decoration:none;background:var(--peach-soft);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -254,7 +258,8 @@ function isDone(){const t=S.table||{};return {home:!!S.region,rpm:!!S.rpm,check:
 function renderNav(){const nav=$("#steps");nav.replaceChildren();const cur=current();  const fin=isDone();for(const [k,t] of ROUTES){nav.append(el("a",{href:"#"+k,class:fin[k]?"done":false,"aria-current":k===cur?"page":false},t));}
   const pb=document.getElementById("progbar");if(pb){const idx=ROUTES.findIndex(r=>r[0]===cur);pb.style.width=Math.max(0,idx)/(ROUTES.length-1)*100+"%";}
   // 단계 칩은 가로로만 맞춥니다 (scrollIntoView는 화면 전체를 위로 끌어올려서 쓰지 않음)
-  const a=nav.querySelector('[aria-current="page"]'); if(a) nav.scrollLeft=Math.max(0,a.offsetLeft-(nav.clientWidth-a.offsetWidth)/2);}
+  const a=nav.querySelector('[aria-current="page"]');
+  if(a&&nav.scrollWidth>nav.clientWidth){const nr=nav.getBoundingClientRect(),ar=a.getBoundingClientRect();nav.scrollLeft+=(ar.left-nr.left)-(nr.width-ar.width)/2;}}
 function renderChip(){$("#regionLabel").textContent=S.region||"테이블 선택 전";}
 function nextBtn(r,label,pre,guard){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(guard&&!guard())return;if(pre)pre();if(KNUM[r]){pending=r;render();window.scrollTo(0,0);}else go(r);}},label||"다음으로"));}
 function stepName(r){const x=ROUTES.find(v=>v[0]===r);return x?x[1].replace(/^[①-⑦]\s*/,""):"";}
