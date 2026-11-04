@@ -314,7 +314,7 @@ V.pick=()=>{
   const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();send("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
   const chosen=PICKS.find(p=>p.k===S.pick);
   return [el("p",{class:"eyebrow"},"⑦ 다시 시작"),el("h1",{},"내일부터 딱 하나만 해 볼까요?"),list,
-    chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t),el("p",{class:"small",style:"margin:0"},"저녁 식사 때 같은 걸 고른 동료와 건배해 보세요.")):null,
+    chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t)):null,
     el("p",{class:"note"},SENDING?"자세한 입력 내용은 이 휴대폰에만 있습니다. 강사에게는 익명 요약만 전달되었고 강의 후 삭제됩니다. 이 휴대폰의 기록을 지우려면 아래 버튼을 누르세요.":"오늘 입력한 내용은 이 휴대폰에만 있습니다. 지우고 싶으면 아래 버튼을 누르세요."),
     el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:Math.random().toString(36).slice(2,10),sent:""};save();renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
 };
