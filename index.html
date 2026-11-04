@@ -205,6 +205,10 @@ const KEY="jamsi-kit-v1";
 const FORM={action:"https://docs.google.com/forms/d/e/1FAIpQLSeOykxRglVU9ApcrLoHevoAadjE5ApNIWHNPpiSBs9WBvbuyg/formResponse",f:{aid:"entry.912127351",step:"entry.63916217",table:"entry.191325252",rpm:"entry.1712654315",warn:"entry.1110709249",disc:"entry.2138657109",pick:"entry.978077708",sentence:"entry.1724541187"}};
 let S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:"",sent:""};
 try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(S,JSON.parse(raw));}catch(e){}
+// 다른 날 남은 기록은 새로 시작 (시험해 본 휴대폰의 예전 RPM·DISC가 섞여 전송되지 않게)
+const TODAY=new Date().toLocaleDateString("sv-SE");
+if(S.aid&&S.day!==TODAY){S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:""};}
+S.day=TODAY;
 if(!S.aid){S.aid=Math.random().toString(36).slice(2,10);}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 save();
@@ -218,8 +222,12 @@ function send(step,data){
     disc:(S.disc&&S.discRevealed)?topType(S.disc).join("·"):"",pick:pk?pk.t:""};
   const v=Object.assign(snap,data||{});
   for(const k in v){const id=FORM.f[k];if(id&&v[k]!=null&&v[k]!=="")body.append(id,String(v[k]).slice(0,500));}
-  return fetch(FORM.action,{method:"POST",mode:"no-cors",body}).then(()=>true).catch(()=>false);
+  return fetch(FORM.action,{method:"POST",mode:"no-cors",body,keepalive:true}).then(()=>true).catch(()=>false);
 }
+// 고르기를 여러 번 바꿀 때는 마지막 선택만 1.5초 뒤 한 번 보냄 (시트에 줄이 덜 쌓이게)
+const _later={};function sendLater(step,data){if(_later[step])clearTimeout(_later[step].t);_later[step]={data,t:setTimeout(()=>{delete _later[step];send(step,data);},1500)};}
+// 화면을 닫거나 다른 앱으로 넘어가면 기다리던 전송을 바로 보냄
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="hidden")return;for(const k in _later){clearTimeout(_later[k].t);const d=_later[k].data;delete _later[k];send(k,d);}});
 const $=s=>document.querySelector(s);
 function el(tag,attrs,...kids){const n=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(k==="class")n.className=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,"");else if(v!==false&&v!=null)n.setAttribute(k,v);}for(const k of kids.flat()){if(k==null||k===false)continue;n.append(k.nodeType?k:document.createTextNode(String(k)));}return n;}
 function toast(t){const n=$("#toast");n.textContent=t;n.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>n.hidden=true,1800);}
@@ -293,7 +301,7 @@ V.rpm=()=>{
   const out=el("p",{class:"soft"},S.rpm?msg[S.rpm]:"하나를 눌러 주세요.");
   const grid=el("div",{class:"rpm",role:"group","aria-label":"오늘 컨디션"});
   for(const [k,t,d,deg] of opts){const g=el("span",{class:"gauge","aria-hidden":"true"});g.innerHTML=`<svg viewBox="0 0 64 40" width="64" height="40"><path d="M6 36A26 26 0 0 1 19 13.5" fill="none" stroke="var(--blue-2)" stroke-width="6" stroke-linecap="round"/><path d="M21.5 12.4A26 26 0 0 1 42.5 12.4" fill="none" stroke="var(--ok)" stroke-width="6"/><path d="M45 13.5A26 26 0 0 1 58 36" fill="none" stroke="var(--hot)" stroke-width="6" stroke-linecap="round"/><line x1="32" y1="36" x2="32" y2="15" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" transform="rotate(${deg} 32 36)"/><circle cx="32" cy="36" r="4" fill="var(--ink)"/></svg>`;
-    grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();send("rpm",{rpm:t});}},g,t,el("span",{class:"small"},d)));}
+    grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();sendLater("rpm",{rpm:t});}},g,t,el("span",{class:"small"},d)));}
   return [el("p",{class:"eyebrow"},"① 오늘 RPM"),el("h1",{},"오늘 내 RPM은 몇인가요?"),el("p",{class:"lead"},"지금 몸과 마음의 회전수를 골라 주세요. 정답은 없습니다."),grid,out,nextBtn("check")];
 };
 V.check=()=>{
@@ -442,7 +450,7 @@ V.card=()=>{
     el("p",{class:"note"},"이 화면을 캡처해 사진첩에 저장하세요. 종이 카드 4번 칸의 응원 한마디는 옆 동료에게 손글씨로 받아요."),nextBtn("pick")];
 };
 V.pick=()=>{
-  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();send("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
+  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();sendLater("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
   const chosen=PICKS.find(p=>p.k===S.pick);
   return [el("p",{class:"eyebrow"},"⑦ 다시 시작"),el("h1",{},"내일부터 딱 하나만 해 볼까요?"),list,
     chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t)):null,
