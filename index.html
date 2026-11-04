@@ -149,6 +149,26 @@ ul.roles li b{flex:none;width:76px;color:var(--blue);font-size:14px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .pulse{animation:pulse 1.4s ease-in-out infinite}
+
+/* 진행 단계 표시 · 잠시 멈춤 */
+.cue{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--muted);margin:2px 0 -6px}
+.cue .k{background:var(--peach-soft);color:var(--hot);border-radius:999px;padding:4px 11px;font-weight:700}
+.pause{display:flex;flex-direction:column;gap:14px;align-items:stretch;text-align:center;padding:28px 22px;border-radius:24px;background:linear-gradient(170deg,var(--blue-soft),var(--surface) 70%);box-shadow:var(--shadow);margin-top:8px}
+.pause .eyebrow{margin:0}
+.pause-k{align-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:128px;height:128px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);gap:0}
+.pause-k span{font-size:12px;font-weight:600;color:var(--muted)}
+.pause-k b{font-size:52px;line-height:1;color:var(--blue);font-weight:800}
+.pause h1{margin:4px 0 0}
+.pause .lead{margin:0}
+.card.mytype{flex-direction:row;align-items:center;gap:14px}
+.card.mytype .badge{width:58px;height:58px;border-radius:18px;font-size:22px}
+.quad>div{aspect-ratio:auto}
+.quad div .dots{flex-direction:row;background:none;box-shadow:none;padding:4px 0;border-radius:0}
+ol.howto{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.ideas{display:flex;flex-wrap:wrap;gap:8px}
+.ideas button{border:0;border-radius:999px;padding:8px 14px;background:var(--blue-soft);color:var(--blue);font:600 14px var(--f-body);cursor:pointer}
+.card input[type=text]{width:100%;font:inherit;font-size:16px;padding:13px 14px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.card input[type=text]:focus{outline:none;border-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -205,14 +225,29 @@ const PICKS=[{k:"rpm",t:"출근 전 \"오늘 내 RPM은?\" 30초 점검"},{k:"bo
 
 // ---------- 라우팅 ----------
 const ROUTES=[["home","시작"],["rpm","① 오늘 RPM"],["check","② 경고등 점검"],["reframe","③ 관점 바꾸기"],["disc","④ DISC 진단"],["table","⑤ 테이블 지도"],["card","⑥ 나의 카드"],["pick","⑦ 내일 할 것"]];
+// PPT 진행 순서와 연결: 슬라이드 오른쪽 위 '모바일 키트 ○' 표시와 같은 번호
+const KNUM={rpm:"①",check:"②",reframe:"③",disc:"④",table:"⑤",card:"⑥",pick:"⑦"};
+const CUE={rpm:["Part 1","‘적정 회전수’ 슬라이드"],check:["Part 1","‘과열 경고등’ 슬라이드"],reframe:["Part 2","‘문장 리폼’ 활동"],disc:["Part 3","‘DISC 자가진단’ 활동"],table:["Part 3","‘테이블 DISC 지도’ 활동"],card:["Part 4","‘잠시멈춤 카드’ 활동"],pick:["마무리","‘다시 시작’ 슬라이드"]};
+let pending=null;
 function current(){const h=(location.hash||"").slice(1);return ROUTES.some(r=>r[0]===h)?h:"home";}
 function go(r){if(location.hash.slice(1)===r)render();else location.hash=r;window.scrollTo(0,0);}
-function isDone(){const t=S.table||{};return {home:!!S.region,rpm:!!S.rpm,check:!!S.warnDone,reframe:typeof reframeLine==="function"&&!!reframeLine(S.reframe),disc:!!S.discRevealed,table:(t.D+t.I+t.S+t.C)>0,card:!!S.cardSeen,pick:!!S.pick};}
+function isDone(){const t=S.table||{};return {home:!!S.region,rpm:!!S.rpm,check:!!S.warnDone,reframe:typeof reframeLine==="function"&&!!reframeLine(S.reframe),disc:!!S.discRevealed,table:!!S.tableSeen||(t.D+t.I+t.S+t.C)>0,card:!!S.cardSeen,pick:!!S.pick};}
 function renderNav(){const nav=$("#steps");nav.replaceChildren();const cur=current();  const fin=isDone();for(const [k,t] of ROUTES){nav.append(el("a",{href:"#"+k,class:fin[k]?"done":false,"aria-current":k===cur?"page":false},t));}
   const pb=document.getElementById("progbar");if(pb){const idx=ROUTES.findIndex(r=>r[0]===cur);pb.style.width=Math.max(0,idx)/(ROUTES.length-1)*100+"%";}
   const a=nav.querySelector('[aria-current="page"]'); if(a) a.scrollIntoView({inline:"center",block:"nearest"});}
 function renderChip(){$("#regionLabel").textContent=S.region||"테이블 선택 전";}
-function nextBtn(r,label,pre){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(pre)pre();go(r);}},label||"다음으로"));}
+function nextBtn(r,label,pre){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(pre)pre();if(KNUM[r]){pending=r;render();window.scrollTo(0,0);}else go(r);}},label||"다음으로"));}
+function stepName(r){const x=ROUTES.find(v=>v[0]===r);return x?x[1].replace(/^[①-⑦]\s*/,""):"";}
+function pauseView(r){const c=CUE[r];
+  return [el("div",{class:"pause"},
+    el("p",{class:"eyebrow"},"잠시 멈춤"),
+    el("div",{class:"pause-k"},el("span",{},"모바일 키트"),el("b",{},KNUM[r])),
+    el("h1",{},"다음은 ‘"+stepName(r)+"’입니다"),
+    el("p",{class:"lead"},"강사님 슬라이드 오른쪽 위에 ‘모바일 키트 "+KNUM[r]+"’ 표시가 나오면 그때 시작해 주세요."),
+    el("p",{class:"small",style:"margin:0"},c[0]+" · "+c[1]+"에서 진행합니다"),
+    el("button",{class:"btn",onclick:()=>{pending=null;go(r);}},KNUM[r]+" 시작하기"),
+    el("button",{class:"btn ghost",onclick:()=>{pending=null;render();}},"방금 화면 다시 보기"))];}
+function cueBar(cur){if(!KNUM[cur])return null;const c=CUE[cur];return el("div",{class:"cue"},el("span",{class:"k"},"키트 "+KNUM[cur]),el("span",{},c[0]+" · "+c[1]));}
 
 // ---------- 화면들 ----------
 const V={};
@@ -222,7 +257,7 @@ V.home=()=>{
   return [
     el("p",{class:"eyebrow"},"농업기계안전전문관 힐링 특강"),
     el("h1",{},"잠시멈춤, 다시시작"),
-    el("p",{class:"lead"},"오늘 강의에서 휴대폰으로 하는 활동이 모두 여기 있습니다. 강사님 안내에 맞춰 한 단계씩 진행해 주세요."),
+    el("p",{class:"lead"},"오늘 강의에서 휴대폰으로 하는 활동이 모두 여기 있습니다. 강사님 슬라이드에 ‘모바일 키트 ①~⑦’ 표시가 나올 때마다 그 단계를 하나씩 진행합니다. 지금은 테이블 번호만 골라 두세요."),
     el("div",{class:"card"},el("label",{class:"q",for:"region"},"우리 테이블은 몇 번인가요?"),sel,
       el("p",{class:"small"},SENDING?"이름, 연락처, 소속은 묻지 않습니다. 테이블 번호와 단계별 요약(오늘 RPM, 경고등 개수, DISC 유형, 내일 할 것)만 익명으로 강사에게 전송되며, 강의가 끝나면 삭제합니다. 경고등은 어떤 항목인지 보내지 않고 개수만 보냅니다. 관점 전환 문장은 직접 '보내기'를 누를 때만 전송됩니다.":"이름, 연락처, 소속은 묻지 않습니다. 입력한 내용은 이 휴대폰 안에만 남고 어디에도 전송되지 않습니다.")),
     nextBtn("rpm","시작하기")];
@@ -234,7 +269,7 @@ V.rpm=()=>{
   const grid=el("div",{class:"rpm",role:"group","aria-label":"오늘 컨디션"});
   for(const [k,t,d,deg] of opts){const g=el("span",{class:"gauge","aria-hidden":"true"});g.innerHTML=`<svg viewBox="0 0 64 40" width="64" height="40"><path d="M6 36A26 26 0 0 1 19 13.5" fill="none" stroke="var(--blue-2)" stroke-width="6" stroke-linecap="round"/><path d="M21.5 12.4A26 26 0 0 1 42.5 12.4" fill="none" stroke="var(--ok)" stroke-width="6"/><path d="M45 13.5A26 26 0 0 1 58 36" fill="none" stroke="var(--hot)" stroke-width="6" stroke-linecap="round"/><line x1="32" y1="36" x2="32" y2="15" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" transform="rotate(${deg} 32 36)"/><circle cx="32" cy="36" r="4" fill="var(--ink)"/></svg>`;
     grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();send("rpm",{rpm:t});}},g,t,el("span",{class:"small"},d)));}
-  return [el("p",{class:"eyebrow"},"① 시동 걸기"),el("h1",{},"오늘 내 RPM은 몇인가요?"),el("p",{class:"lead"},"지금 몸과 마음의 회전수를 골라 주세요. 정답은 없습니다."),grid,out,nextBtn("check")];
+  return [el("p",{class:"eyebrow"},"① 오늘 RPM"),el("h1",{},"오늘 내 RPM은 몇인가요?"),el("p",{class:"lead"},"지금 몸과 마음의 회전수를 골라 주세요. 정답은 없습니다."),grid,out,nextBtn("check")];
 };
 V.check=()=>{
   const total=()=>S.checks.length;
@@ -310,19 +345,40 @@ function resultView(){
     el("p",{class:"note"},"누구나 네 가지를 다 갖고 있고 비율만 다릅니다. 진단이 아니라 대화의 재료로 써 주세요."),
     nextBtn("table","우리 테이블 지도로")];
 }
+const NICK={D:"불도저 트랙터단",I:"수다 드론 편대",S:"평화의 이앙기단",C:"정밀 진단 연구소"};
+function nickIdeas(tb){const sum=tb.D+tb.I+tb.S+tb.C;if(!sum)return Object.values(NICK);const max=Math.max(tb.D,tb.I,tb.S,tb.C);const tops=["D","I","S","C"].filter(k=>tb[k]===max);
+  const out=tops.length===1?[NICK[tops[0]]]:[tops.map(k=>TYPES[k].mach).join("·")+" 연합"];if(["D","I","S","C"].every(k=>tb[k]>0))out.push("사륜구동 만능팀");return out;}
 V.table=()=>{
+  const canSend=typeof SENDING!=="undefined"&&SENDING;
   const tb=S.table;const sum=tb.D+tb.I+tb.S+tb.C;
+  const mine=S.disc&&S.discRevealed?topType(S.disc):null;
+  const me=el("div",{class:"card mytype"},...(mine?[el("div",{class:"badge"},mine.join("·")),
+      el("div",{},el("b",{},"손 들 때 내 유형: "+mine.map(k=>k+" "+TYPES[k].name).join(", ")),el("p",{class:"small",style:"margin:4px 0 0"},"기록이가 유형을 부르면 손을 들어 주세요. 동점이면 두 번 다 들어요."))]
+    :[el("div",{},el("b",{},"④에서 ‘내 결과 공개!’를 먼저 눌러 주세요"),el("p",{class:"small",style:"margin:4px 0 0"},"공개한 유형이 손 들기와 집계 화면에 쓰입니다.")),el("button",{class:"btn ghost",style:"width:auto;flex:none",onclick:()=>go("disc")},"④로")]));
+  const how=el("ol",{class:"howto"},
+    el("li",{},"각자 ④에서 결과를 공개하면, 프로젝터 집계 화면에 ",el("b",{},"테이블별 DISC 지도"),"가 자동으로 그려집니다."),
+    el("li",{},"기록이가 D·I·S·C를 차례로 부르면 손을 듭니다. 기록이는 아래에서 인원을 셉니다."),
+    el("li",{},"분포를 보고 테이블장이 ",el("b",{},"우리 테이블 별명"),"을 정하면, 기록이가 보냅니다."));
+  const head=[el("p",{class:"eyebrow"},"⑤ 우리 테이블 DISC 지도"),el("h1",{},(S.region||"우리 테이블")+" DISC 지도"),
+    el("p",{class:"lead"},"이름 스티커 대신 휴대폰으로 합니다. 누가 어떤 유형인지는 어디에도 남지 않고, 테이블 인원만 셉니다."),me,el("div",{class:"card"},el("h2",{},"진행 순서 · 4분"),how)];
+  if(!S.recorder) return [...head,
+    el("button",{class:"btn ghost",onclick:()=>{S.recorder=true;save();render();}},"제가 기록이예요 (테이블에 한 명만)"),
+    nextBtn("card","다음으로")];
   const ctrs=el("div",{class:"counter"},["D","I","S","C"].map(k=>el("div",{class:"ctr"},el("strong",{},k+" "+TYPES[k].name),el("span",{class:"n"},tb[k]),
     el("div",{class:"pm"},el("button",{"aria-label":k+" 빼기",onclick:()=>{tb[k]=Math.max(0,tb[k]-1);save();render();}},"−"),el("button",{"aria-label":k+" 더하기",onclick:()=>{tb[k]=Math.min(15,tb[k]+1);save();render();}},"+")))));
   const quad=el("div",{class:"quad","aria-label":"우리 테이블 DISC 지도"},["D","I","C","S"].map(k=>el("div",{},el("b",{},k+" "+TYPES[k].mach),el("div",{class:"dots"},Array.from({length:tb[k]},()=>el("i"))),el("span",{class:"small"},tb[k]+"명"))));
-  const roles=el("ul",{class:"roles"},["D","I","S","C"].map(k=>{let who=tb[k]>0?`${TYPES[k].name} ${tb[k]}명`:`${TYPES[k].name} 없음 → ${nearest(k)}형이 변신!`;return el("li",{},el("b",{},TYPES[k].role.split("·")[0]),el("span",{},who));}));
-  return [el("p",{class:"eyebrow"},"⑤ 기록이용 · 테이블에 한 대만"),el("h1",{},(S.region||"우리 테이블")+" DISC 지도"),
-    el("p",{class:"lead"},"기록이 한 사람의 휴대폰으로, 유형별로 손을 든 인원을 눌러 세어 주세요."),ctrs,
-    el("p",{class:"small",style:"margin:0"},`합계 ${sum}명`),quad,
-    el("div",{class:"card"},el("h2",{},"응급복구단 역할 추천"),el("p",{class:"small",style:"margin:0"},"태풍 다음 날, 우리 테이블이 침수 농기계 복구단으로 출동한다면?"),roles),
-    nextBtn("card","나의 잠시멈춤 카드로")];
+  const inp=el("input",{type:"text",id:"nick",maxlength:"20",placeholder:"예) 평화의 이앙기단",value:S.nick||""});
+  inp.addEventListener("input",()=>{S.nick=inp.value;save();});
+  const ideas=el("div",{class:"ideas"},nickIdeas(tb).map(n=>el("button",{type:"button",onclick:()=>{S.nick=n;inp.value=n;save();}},n)));
+  const sendBtn=canSend?el("button",{class:"btn",onclick:async(ev)=>{const n=(S.nick||"").trim();if(!n){toast("별명을 먼저 정해 주세요");return;}
+      ev.currentTarget.disabled=true;await send("nick",{sentence:"[별명] "+n});S.nickSent=n;save();toast("집계 화면에 보냈습니다");render();}},S.nickSent?"별명 다시 보내기":"집계 화면에 별명 보내기"):null;
+  return [...head,
+    el("div",{class:"card"},el("h2",{},"기록이 · 유형별 인원 세기"),ctrs,el("p",{class:"small",style:"margin:0"},`합계 ${sum}명`),quad),
+    el("div",{class:"card"},el("label",{class:"q",for:"nick"},"우리 테이블 별명"),ideas,inp,sendBtn,
+      S.nickSent?el("p",{class:"small",style:"margin:0"},"보낸 별명: "+S.nickSent):el("p",{class:"small",style:"margin:0"},"D가 많으면 ‘불도저 트랙터단’, S가 많으면 ‘평화의 이앙기단’처럼 웃으며 정해요.")),
+    el("button",{class:"btn ghost",onclick:()=>{S.recorder=false;save();render();}},"기록이 화면 닫기"),
+    nextBtn("card","다음으로")];
 };
-function nearest(k){const tb=S.table;const order={D:["C","I","S"],I:["D","S","C"],S:["I","C","D"],C:["S","D","I"]}[k];return order.find(x=>tb[x]>0)||"누구든";}
 V.card=()=>{
   const flat=CHECKS.flatMap((g,gi)=>g.items.map((it,ii)=>({id:"c"+gi+ii,t:it,g:g.g})));
   const mine=flat.filter(x=>S.checks.includes(x.id)).slice(0,3);
@@ -347,8 +403,8 @@ V.pick=()=>{
     el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:Math.random().toString(36).slice(2,10),sent:""};save();renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
 };
 
-function render(){const cur=current();if(cur==="card"&&!S.cardSeen){S.cardSeen=true;save();}renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...V[cur]()));}
-window.addEventListener("hashchange",render);
+function render(){const cur=current();if(cur==="card"&&!S.cardSeen){S.cardSeen=true;save();}if(cur==="table"&&!S.tableSeen){S.tableSeen=true;save();}renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...(pending&&cur!=="host"?pauseView(pending):[cueBar(cur),...V[cur]()])));}
+window.addEventListener("hashchange",()=>{pending=null;render();});
 render();
 
 })();
