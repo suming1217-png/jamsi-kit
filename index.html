@@ -169,6 +169,10 @@ ol.howto{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap
 .ideas button{border:0;border-radius:999px;padding:8px 14px;background:var(--blue-soft);color:var(--blue);font:600 14px var(--f-body);cursor:pointer}
 .card input[type=text]{width:100%;font:inherit;font-size:16px;padding:13px 14px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
 .card input[type=text]:focus{outline:none;border-color:var(--blue)}
+
+.sendcard{border:2px solid var(--blue-soft)}
+.sendcard h2{font-size:17px;margin:0}
+.sent-ok{color:var(--ok);font-weight:600}
 </style>
 </head>
 <body>
@@ -200,7 +204,11 @@ const SENDING=!!FORM.action;
 function send(step,data){
   if(!SENDING) return Promise.resolve(false);
   const body=new URLSearchParams();
-  const v=Object.assign({aid:S.aid,step,table:S.region||""},data||{});
+  const RPML={low:"저속",mid:"적정",red:"레드존"};
+  const pk=PICKS.find(p=>p.k===S.pick);
+  const snap={aid:S.aid,step,table:S.region||"",rpm:RPML[S.rpm]||"",warn:S.warnDone?String((S.checks||[]).length):"",
+    disc:(S.disc&&S.discRevealed)?topType(S.disc).join("·"):"",pick:pk?pk.t:""};
+  const v=Object.assign(snap,data||{});
   for(const k in v){const id=FORM.f[k];if(id&&v[k]!=null&&v[k]!=="")body.append(id,String(v[k]).slice(0,500));}
   return fetch(FORM.action,{method:"POST",mode:"no-cors",body}).then(()=>true).catch(()=>false);
 }
@@ -236,7 +244,7 @@ function renderNav(){const nav=$("#steps");nav.replaceChildren();const cur=curre
   const pb=document.getElementById("progbar");if(pb){const idx=ROUTES.findIndex(r=>r[0]===cur);pb.style.width=Math.max(0,idx)/(ROUTES.length-1)*100+"%";}
   const a=nav.querySelector('[aria-current="page"]'); if(a) a.scrollIntoView({inline:"center",block:"nearest"});}
 function renderChip(){$("#regionLabel").textContent=S.region||"테이블 선택 전";}
-function nextBtn(r,label,pre){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(pre)pre();if(KNUM[r]){pending=r;render();window.scrollTo(0,0);}else go(r);}},label||"다음으로"));}
+function nextBtn(r,label,pre,guard){return el("div",{class:"dock"},el("button",{class:"btn",onclick:()=>{if(guard&&!guard())return;if(pre)pre();if(KNUM[r]){pending=r;render();window.scrollTo(0,0);}else go(r);}},label||"다음으로"));}
 function stepName(r){const x=ROUTES.find(v=>v[0]===r);return x?x[1].replace(/^[①-⑦]\s*/,""):"";}
 function pauseView(r){const c=CUE[r];
   return [el("div",{class:"pause"},
@@ -260,7 +268,7 @@ V.home=()=>{
     el("p",{class:"lead"},"오늘 강의에서 휴대폰으로 하는 활동이 모두 여기 있습니다. 강사님 슬라이드에 ‘모바일 키트 ①~⑦’ 표시가 나올 때마다 그 단계를 하나씩 진행합니다. 지금은 테이블 번호만 골라 두세요."),
     el("div",{class:"card"},el("label",{class:"q",for:"region"},"우리 테이블은 몇 번인가요?"),sel,
       el("p",{class:"small"},SENDING?"이름, 연락처, 소속은 묻지 않습니다. 테이블 번호와 단계별 요약(오늘 RPM, 경고등 개수, DISC 유형, 내일 할 것)만 익명으로 강사에게 전송되며, 강의가 끝나면 삭제합니다. 경고등은 어떤 항목인지 보내지 않고 개수만 보냅니다. 관점 전환 문장은 직접 '보내기'를 누를 때만 전송됩니다.":"이름, 연락처, 소속은 묻지 않습니다. 입력한 내용은 이 휴대폰 안에만 남고 어디에도 전송되지 않습니다.")),
-    nextBtn("rpm","시작하기")];
+    nextBtn("rpm","시작하기",null,()=>{if(!S.region){toast("테이블 번호를 먼저 골라 주세요");const r=document.getElementById("region");if(r)r.focus();return false;}return true;})];
 };
 V.rpm=()=>{
   const opts=[["low","저속","너무 느슨, 무기력",-60],["mid","적정","해볼 만하다",0],["red","레드존","과열, 쉬고 싶다",60]];
@@ -298,8 +306,15 @@ V.reframe=()=>{
     f("rf2","2. 다시 읽기: 이 긴장은 무엇을 지키려는 걸까?","예) 사고 없는 하루","b"),
     f("rf3","3. 한 걸음: 지금 할 수 있는 작은 행동 1개","예) 점검표 한 번 더 보기","c"),
     out,
-    SENDING?el("button",{class:"btn ghost",onclick:async(ev)=>{const r=S.reframe;const line=reframeLine(r);if(!(r.orig||line)){toast("먼저 문장을 적어 주세요");return;}
-      ev.currentTarget.disabled=true;await send("sentence",{sentence:(r.orig?"[원래] "+r.orig+" ":"")+(line?"[새 문장] "+line:"")});S.sent="1";save();toast("익명으로 보냈습니다");render();}},S.sent?"다시 보내기 (익명)":"이 문장을 강사에게 보내기 (익명, 선택)"):null,
+    SENDING?el("div",{class:"card sendcard"},
+      el("h2",{},"강사에게 보내기 (선택)"),
+      el("p",{class:"small",style:"margin:0"},"보내면 이름 없이 프로젝터 집계 화면 ‘3 관점 전환 문장’에 나옵니다. 보내지 않아도 됩니다."),
+      el("button",{class:"btn",onclick:async(ev)=>{const r=S.reframe;const line=reframeLine(r);
+        if(!line){toast("1~3번 칸을 모두 채우면 보낼 수 있어요");return;}
+        const b=ev.currentTarget;b.disabled=true;b.textContent="보내는 중…";
+        await send("sentence",{sentence:(r.orig?"[원래] "+r.orig+" ":"")+"[새 문장] "+line});S.sent=line;save();toast("익명으로 보냈습니다");render();}},
+        S.sent?"고친 문장 다시 보내기":"이 문장 보내기 (익명)"),
+      S.sent?el("p",{class:"small sent-ok",style:"margin:0"},"보낸 문장: "+S.sent):null):null,
     el("p",{class:"note"},"테이블 활동: 짝과 휴대폰을 바꿔 서로의 문장을 함께 다듬어 보세요."),nextBtn("disc")];
 };
 // 관점 전환 문장: "지금 [1]. [2]을/를 지키기 위해 [3]을/를 해 보자"
@@ -371,7 +386,7 @@ V.table=()=>{
   inp.addEventListener("input",()=>{S.nick=inp.value;save();});
   const ideas=el("div",{class:"ideas"},nickIdeas(tb).map(n=>el("button",{type:"button",onclick:()=>{S.nick=n;inp.value=n;save();}},n)));
   const sendBtn=canSend?el("button",{class:"btn",onclick:async(ev)=>{const n=(S.nick||"").trim();if(!n){toast("별명을 먼저 정해 주세요");return;}
-      ev.currentTarget.disabled=true;await send("nick",{sentence:"[별명] "+n});S.nickSent=n;save();toast("집계 화면에 보냈습니다");render();}},S.nickSent?"별명 다시 보내기":"집계 화면에 별명 보내기"):null;
+      ev.currentTarget.disabled=true;if(!S.region){toast("시작 화면에서 테이블 번호를 먼저 골라 주세요");ev.currentTarget.disabled=false;return;}await send("sentence",{sentence:"[별명] "+n});S.nickSent=n;save();toast("집계 화면에 보냈습니다");render();}},S.nickSent?"별명 다시 보내기":"집계 화면에 별명 보내기"):null;
   return [...head,
     el("div",{class:"card"},el("h2",{},"기록이 · 유형별 인원 세기"),ctrs,el("p",{class:"small",style:"margin:0"},`합계 ${sum}명`),quad),
     el("div",{class:"card"},el("label",{class:"q",for:"nick"},"우리 테이블 별명"),ideas,inp,sendBtn,
