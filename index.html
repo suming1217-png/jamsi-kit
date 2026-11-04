@@ -144,7 +144,7 @@ ul.roles li b{flex:none;width:76px;color:var(--blue);font-size:14px}
 const KEY="jamsi-kit-v1";
 // ---------- 익명 집계 설정 (구글 폼) ----------
 // FORM.action이 비어 있으면 아무것도 전송하지 않습니다.
-const FORM={action:"",f:{aid:"",step:"",table:"",rpm:"",warn:"",disc:"",pick:"",sentence:""}};
+const FORM={action:"https://docs.google.com/forms/d/e/1FAIpQLSeOykxRglVU9ApcrLoHevoAadjE5ApNIWHNPpiSBs9WBvbuyg/formResponse",f:{aid:"entry.912127351",step:"entry.63916217",table:"entry.191325252",rpm:"entry.1712654315",warn:"entry.1110709249",disc:"entry.2138657109",pick:"entry.978077708",sentence:"entry.1724541187"}};
 let S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:"",sent:""};
 try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(S,JSON.parse(raw));}catch(e){}
 if(!S.aid){S.aid=Math.random().toString(36).slice(2,10);}
