@@ -142,9 +142,22 @@ ul.roles li b{flex:none;width:76px;color:var(--blue);font-size:14px}
 "use strict";
 // ---------- 저장 (이 휴대폰 안에만) ----------
 const KEY="jamsi-kit-v1";
-let S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:""};
+// ---------- 익명 집계 설정 (구글 폼) ----------
+// FORM.action이 비어 있으면 아무것도 전송하지 않습니다.
+const FORM={action:"",f:{aid:"",step:"",table:"",rpm:"",warn:"",disc:"",pick:"",sentence:""}};
+let S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:"",sent:""};
 try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(S,JSON.parse(raw));}catch(e){}
+if(!S.aid){S.aid=Math.random().toString(36).slice(2,10);}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+save();
+const SENDING=!!FORM.action;
+function send(step,data){
+  if(!SENDING) return Promise.resolve(false);
+  const body=new URLSearchParams();
+  const v=Object.assign({aid:S.aid,step,table:S.region||""},data||{});
+  for(const k in v){const id=FORM.f[k];if(id&&v[k]!=null&&v[k]!=="")body.append(id,String(v[k]).slice(0,500));}
+  return fetch(FORM.action,{method:"POST",mode:"no-cors",body}).then(()=>true).catch(()=>false);
+}
 const $=s=>document.querySelector(s);
 function el(tag,attrs,...kids){const n=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(k==="class")n.className=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,"");else if(v!==false&&v!=null)n.setAttribute(k,v);}for(const k of kids.flat()){if(k==null||k===false)continue;n.append(k.nodeType?k:document.createTextNode(String(k)));}return n;}
 function toast(t){const n=$("#toast");n.textContent=t;n.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>n.hidden=true,1800);}
@@ -177,13 +190,13 @@ function nextBtn(r,label){return el("button",{class:"btn",onclick:()=>go(r)},lab
 const V={};
 V.home=()=>{
   const sel=el("select",{id:"region","aria-label":"우리 테이블 번호"},el("option",{value:""},"테이블 번호를 고르세요 (1~13)"),REGIONS.map(r=>el("option",{value:r,selected:S.region===r},r)));
-  sel.addEventListener("change",()=>{S.region=sel.value;save();renderChip();});
+  sel.addEventListener("change",()=>{S.region=sel.value;save();renderChip();if(S.region)send("join");});
   return [
     el("p",{class:"eyebrow"},"농업기계안전전문관 힐링 특강"),
     el("h1",{},"잠시멈춤, 다시시작"),
     el("p",{class:"lead"},"오늘 강의에서 휴대폰으로 하는 활동이 모두 여기 있습니다. 강사님 안내에 맞춰 한 단계씩 진행해 주세요."),
     el("div",{class:"card"},el("label",{class:"q",for:"region"},"우리 테이블은 몇 번인가요?"),sel,
-      el("p",{class:"small"},"이름, 연락처, 소속은 묻지 않습니다. 입력한 내용은 이 휴대폰 안에만 남고 어디에도 전송되지 않습니다.")),
+      el("p",{class:"small"},SENDING?"이름, 연락처, 소속은 묻지 않습니다. 테이블 번호와 단계별 요약(오늘 RPM, 경고등 개수, DISC 유형, 내일 할 것)만 익명으로 강사에게 전송되며, 강의가 끝나면 삭제합니다. 경고등은 어떤 항목인지 보내지 않고 개수만 보냅니다. 관점 전환 문장은 직접 '보내기'를 누를 때만 전송됩니다.":"이름, 연락처, 소속은 묻지 않습니다. 입력한 내용은 이 휴대폰 안에만 남고 어디에도 전송되지 않습니다.")),
     nextBtn("rpm","시작하기")];
 };
 V.rpm=()=>{
@@ -192,7 +205,7 @@ V.rpm=()=>{
   const out=el("p",{class:"soft"},S.rpm?msg[S.rpm]:"하나를 눌러 주세요.");
   const grid=el("div",{class:"rpm",role:"group","aria-label":"오늘 컨디션"});
   for(const [k,t,d,deg] of opts){const g=el("span",{class:"gauge"},el("i",{style:`transform:translateX(-50%) rotate(${deg}deg)`}));
-    grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();}},g,t,el("span",{class:"small"},d)));}
+    grid.append(el("button",{"aria-pressed":S.rpm===k?"true":"false",onclick:()=>{S.rpm=k;save();render();send("rpm",{rpm:t});}},g,t,el("span",{class:"small"},d)));}
   return [el("p",{class:"eyebrow"},"① 시동 걸기"),el("h1",{},"오늘 내 RPM은 몇인가요?"),el("p",{class:"lead"},"지금 몸과 마음의 회전수를 골라 주세요. 정답은 없습니다."),grid,out,nextBtn("check")];
 };
 V.check=()=>{
@@ -208,7 +221,7 @@ V.check=()=>{
       cb.addEventListener("change",()=>{S.checks=cb.checked?[...new Set([...S.checks,id])]:S.checks.filter(x=>x!==id);save();paint();});
       return el("label",{class:"check",for:id},cb,el("span",{},it));})));
   paint();
-  return [el("p",{class:"eyebrow"},"② 과열 경고등"),el("h1",{},"나는 몇 개 켜졌나요?"),el("p",{class:"lead"},"최근 2주를 떠올리며 해당하는 칸을 눌러 주세요. 교육용 자가점검이며 진단이 아닙니다. 결과는 나만 봅니다."),...groups,res,nextBtn("reframe")];
+  return [el("p",{class:"eyebrow"},"② 과열 경고등"),el("h1",{},"나는 몇 개 켜졌나요?"),el("p",{class:"lead"},"최근 2주를 떠올리며 해당하는 칸을 눌러 주세요. 교육용 자가점검이며 진단이 아닙니다. 결과는 나만 봅니다."+(SENDING?" 강사에게는 개수만 익명으로 전달됩니다.":"")),...groups,res,el("button",{class:"btn",onclick:()=>{send("warn",{warn:S.checks.length});go("reframe");}},"다음으로")];
 };
 V.reframe=()=>{
   const f=(id,label,ph,key)=>{const t=el("textarea",{id,placeholder:ph});t.value=S.reframe[key]||"";t.addEventListener("input",()=>{S.reframe[key]=t.value;save();paintOut();});return el("div",{class:"card"},el("label",{class:"q",for:id},label),t);};
@@ -221,7 +234,10 @@ V.reframe=()=>{
     f("rf1","1. 알아차리기: 지금 내 몸과 마음은?","예) 어깨가 굳었네. 긴장했구나.","a"),
     f("rf2","2. 다시 읽기: 이 긴장은 무엇을 지키려는 걸까?","예) 사고 없이 끝내고 싶어서 그런 거구나.","b"),
     f("rf3","3. 한 걸음: 지금 할 수 있는 작은 행동 1개","예) 점검표부터 한 번 더 보자.","c"),
-    out,el("p",{class:"note"},"테이블 활동: 짝과 휴대폰을 바꿔 서로의 문장을 함께 다듬어 보세요."),nextBtn("disc")];
+    out,
+    SENDING?el("button",{class:"btn ghost",onclick:async(ev)=>{const r=S.reframe;const line=[r.a,r.b,r.c].filter(Boolean).join(" ");if(!(r.orig||line)){toast("먼저 문장을 적어 주세요");return;}
+      ev.currentTarget.disabled=true;await send("sentence",{sentence:(r.orig?"[원래] "+r.orig+" ":"")+(line?"[새 문장] "+line:"")});S.sent="1";save();toast("익명으로 보냈습니다");render();}},S.sent?"다시 보내기 (익명)":"이 문장을 강사에게 보내기 (익명, 선택)"):null,
+    el("p",{class:"note"},"테이블 활동: 짝과 휴대폰을 바꿔 서로의 문장을 함께 다듬어 보세요."),nextBtn("disc")];
 };
 // DISC
 let discState=null;
@@ -244,7 +260,7 @@ function topType(c){const max=Math.max(c.D,c.I,c.S,c.C);return ["D","I","S","C"]
 function waitView(){
   return [el("div",{class:"card wait"},el("p",{class:"eyebrow"},"체크 완료"),el("div",{class:"drum pulse"},"두구두구…"),
     el("p",{style:"margin:0"},"모두 끝날 때까지 잠시 기다려 주세요. 강사님이 \"공개!\"라고 하면 아래 버튼을 누르세요."),
-    el("button",{class:"btn peach",onclick:()=>{S.discRevealed=true;save();render();}},"내 결과 공개!")),
+    el("button",{class:"btn peach",onclick:()=>{S.discRevealed=true;save();render();send("disc",{disc:topType(S.disc).join("·")});}},"내 결과 공개!")),
     el("button",{class:"btn ghost",onclick:()=>{S.disc=null;save();render();}},"처음부터 다시 체크하기")];
 }
 function resultView(){
@@ -291,12 +307,12 @@ V.card=()=>{
     el("p",{class:"note"},"이 화면을 캡처해 사진첩에 저장하세요. 종이 카드 4번 칸의 응원 한마디는 옆 동료에게 손글씨로 받아요."),nextBtn("pick")];
 };
 V.pick=()=>{
-  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();}},el("span",{class:"dot"}),el("span",{},p.t))));
+  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();send("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
   const chosen=PICKS.find(p=>p.k===S.pick);
   return [el("p",{class:"eyebrow"},"⑦ 다시 시작"),el("h1",{},"내일부터 딱 하나만 해 볼까요?"),list,
     chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t),el("p",{class:"small",style:"margin:0"},"저녁 식사 때 같은 걸 고른 동료와 건배해 보세요.")):null,
-    el("p",{class:"note"},"오늘 입력한 내용은 이 휴대폰에만 있습니다. 지우고 싶으면 아래 버튼을 누르세요."),
-    el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:""};renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
+    el("p",{class:"note"},SENDING?"자세한 입력 내용은 이 휴대폰에만 있습니다. 강사에게는 익명 요약만 전달되었고 강의 후 삭제됩니다. 이 휴대폰의 기록을 지우려면 아래 버튼을 누르세요.":"오늘 입력한 내용은 이 휴대폰에만 있습니다. 지우고 싶으면 아래 버튼을 누르세요."),
+    el("button",{class:"btn ghost",onclick:()=>{try{localStorage.removeItem(KEY);}catch(e){}S={region:"",rpm:"",checks:[],disc:null,discRevealed:false,reframe:{a:"",b:"",c:"",orig:""},table:{D:0,I:0,S:0,C:0},pick:"",aid:Math.random().toString(36).slice(2,10),sent:""};save();renderChip();toast("모두 지웠습니다");go("home");}},"내 기록 모두 지우기")];
 };
 
 function render(){const cur=current();renderNav();renderChip();const app=$("#app");app.replaceChildren(el("section",{class:"view"},...V[cur]()));}
