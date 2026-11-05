@@ -449,8 +449,11 @@ V.card=()=>{
   return [el("p",{class:"eyebrow"},"⑥ 나만의 카드"),el("h1",{},"나의 잠시멈춤 카드"),card,
     el("p",{class:"note"},"이 화면을 캡처해 사진첩에 저장하세요. 종이 카드 4번 칸의 응원 한마디는 옆 동료에게 손글씨로 받아요."),nextBtn("pick")];
 };
+let pickOrder=null;
 V.pick=()=>{
-  const list=el("div",{class:"picks"},PICKS.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();sendLater("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
+  // 순서는 키트를 열 때마다 한 번 섞음 (고르는 동안에는 자리가 바뀌지 않게)
+  if(!pickOrder)pickOrder=shuffle(PICKS);
+  const list=el("div",{class:"picks"},pickOrder.map(p=>el("button",{"aria-pressed":S.pick===p.k?"true":"false",onclick:()=>{S.pick=p.k;save();render();sendLater("pick",{pick:p.t});}},el("span",{class:"dot"}),el("span",{},p.t))));
   const chosen=PICKS.find(p=>p.k===S.pick);
   return [el("p",{class:"eyebrow"},"⑦ 다시 시작"),el("h1",{},"내일부터 딱 하나만 해 볼까요?"),list,
     chosen?el("div",{class:"card"},el("h2",{},"좋아요, 내일부터"),el("p",{style:"margin:0"},chosen.t)):null,
